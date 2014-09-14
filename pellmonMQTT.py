@@ -121,10 +121,10 @@ class Dbus_handler:
        
 if __name__ == "__main__":
     
-    def on_connect(rc):
+    def on_connect(*args):
         print "Connected";
        
-    def on_publish(rc):
+    def on_publish(*args):
         print 'published'
     
     #GObject.threads_init()

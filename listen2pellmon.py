@@ -4,11 +4,12 @@
 import mosquitto
 
 #define what happens after connection
-def on_connect(rc):
+def on_connect(*args):
     print "Connected";
 
-#On recipt of a message create a pynotification and show it
-def on_message(msg):
+#On recipt of a message
+def on_message(*args):
+    msg = args[-1]
     print msg.topic, msg.payload
 
 #create a broker
@@ -21,7 +22,7 @@ mqttc.on_connect = on_connect
 #connect
 mqttc.connect("192.168.1.4", 1883, 60, True)
 
-#subscribe to topic test
+#subscribe to all pellmon data
 mqttc.subscribe("pellmon/+")
 
 #keep connected to broker
