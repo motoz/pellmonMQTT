@@ -3,7 +3,7 @@ pellmonMQTT
 
 An MQTT client for PellMon.
 
-PellmonMQTT connects to the PellMon DBUS interface and publishes all data at pellmon/_item_ and subscribes to all settings at pellmon/settings/_item_. Changed data items are republished and received data is written to the corresponding PellMon _item_. Events are published to pellmon/__event__.
+PellmonMQTT connects to the PellMon DBUS interface and publishes all data at pellmon/_item_ and subscribes to all settings at pellmon/settings/_item_. Changed data items are republished and received data is written to the corresponding PellMon _item_. Events are published to pellmon/\_\_event\_\_.
 
 
 ####Usage:
