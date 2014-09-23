@@ -13,7 +13,7 @@ def on_message(*args):
     print msg.topic, msg.payload
 
 #create a broker
-mqttc = mosquitto.Mosquitto("python_sub2")
+mqttc = mosquitto.Mosquitto()
 
 #define the callbacks
 mqttc.on_message = on_message

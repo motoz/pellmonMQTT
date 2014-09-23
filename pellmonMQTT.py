@@ -17,7 +17,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-import readline, os
+import os
 import sys
 import argparse
 from gi.repository import Gio, GLib, GObject
@@ -27,11 +27,12 @@ class DbusNotConnected(Exception):
     pass
 
 class Dbus_handler:
-    def __init__(self, bus='SESSION'):
+    def __init__(self, mq, bus='SESSION'):
         if bus=='SYSTEM':
             self.bustype=Gio.BusType.SYSTEM
         else:
             self.bustype=Gio.BusType.SESSION
+        self.mq = mq
 
     def start(self):
         self.notify = None
@@ -43,7 +44,6 @@ class Dbus_handler:
             self.dbus_connect,
             self.dbus_disconnect,
             )
-        print 's'
 
     def dbus_connect(self, connection, name, owner):
         print "connected"
@@ -55,28 +55,37 @@ class Dbus_handler:
             '/org/pellmon/int',
             'org.pellmon.int',
             None)
-        self.db = self.notify.GetDB()
-        print self.db
+        #Publish all data items tagged with 'All' to pellmon/_item_
+        self.db = self.notify.GetFullDB('(as)',['All',])
         for item in self.db:
-            print item
-            mqttc.publish("pellmon/%s"%item, self.getItem(item))
-        
+            try:
+                value = self.getItem(item['name'])
+                print 'Publish %s to pellmon/%s'%(value, item['name'])
+                self.mq.publish("pellmon/%s"%item['name'], value, qos=2, retain=True)
+            except:
+                pass
+
+        #Subscribe to all data items tagged with 'Settings' at pellmon/settings/_item
+        self.settings = self.notify.GetFullDB('(as)',['Settings',])
+        for item in self.settings:
+            print 'Subscribe to pellmon/settings/%s'%item['name']
+            self.mq.subscribe("pellmon/settings/%s"%item['name'])
+
+        #Listen to the DBUS 'item changed' signal and publish changes at pellmon/_item_
         def on_signal(proxy, sender_name, signal_name, parameters):
             p = parameters[0]
             msg = []
             l = p.split(';')
             for ds in l:
                 d= ds.split(':')
-                mqttc.publish("pellmon/%s"%d[0], d[1])
-                print d[0],d[1]
+                self.mq.publish("pellmon/%s"%d[0], d[1], qos=2, retain=True)
+                print 'Publish %s to pellmon/%s'%(d[1], d[0])
 
         self.notify.connect("g-signal", on_signal)
-
 
     def dbus_disconnect(self, connection, name):
         if self.notify:
             self.notify = None
-
 
     def getItem(self, itm):
         if self.notify:
@@ -125,29 +134,38 @@ if __name__ == "__main__":
         print "Connected";
        
     def on_publish(*args):
-        print 'published'
-    
-    #GObject.threads_init()
-    
-    #create a broker
-    mqttc = mosquitto.Mosquitto("python_sub")
-    #mqttc.on_connect = on_connect
-    mqttc.on_publish = on_publish
-    mqttc.connect("192.168.1.4", 1883, 60, True)
+        pass #print 'published'
+
+    def on_subscribe(*args):
+        pass #print 'subscribed'
+
+    def on_message(*args):
+        """Call the DBUS setItem method with item name and payload from topic subscription at pellmon/settings/_item_"""
+        msg = args[-1]
+        item = msg.topic.split('/')[-1]
+        try:
+            print 'Set %s=%s, %s'%(item, msg.payload, dbus.setItem(item, msg.payload))
+        except:
+            pass
+
+    GObject.threads_init()
 
     # A main loop is needed for dbus "name watching" to work
     main_loop = GLib.MainLoop()
     
-    def publish():
-        print dbus.getdb()
- 
-    #GLib.timeout_add(100, publish)
+    #create a broker
+    mqttc = mosquitto.Mosquitto()
+    mqttc.on_connect = on_connect
+    mqttc.on_publish = on_publish
+    mqttc.on_subscribe = on_subscribe
+    mqttc.on_message = on_message
+    mqttc.connect("192.168.1.4", 1883, 60, True)
+    
+    mqttc.loop_start()
 
-
-
-    dbus = Dbus_handler('SYSTEM')
+    dbus = Dbus_handler(mqttc, 'SESSION')
     dbus.start()
-    print 'started'
+
     try:
         main_loop.run()
     except KeyboardInterrupt:
