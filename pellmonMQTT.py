@@ -78,6 +78,8 @@ class Dbus_handler:
             l = p.split(';')
             for ds in l:
                 d= ds.split(':')
+                if d[0] == '__event__':
+                    d[1] = ':'.join(d[1:])
                 self.mq.publish("pellmon/%s"%d[0], d[1], qos=2, retain=True)
                 print 'Publish %s to pellmon/%s'%(d[1], d[0])
 
