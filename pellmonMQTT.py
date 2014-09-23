@@ -127,7 +127,9 @@ class Dbus_handler:
         else:
             raise DbusNotConnected("server not running")
 
-       
+class config:
+    pass
+
 if __name__ == "__main__":
     
     def on_connect(*args):
@@ -148,6 +150,14 @@ if __name__ == "__main__":
         except:
             pass
 
+
+    parser = argparse.ArgumentParser(prog='pellmonMQTT')
+    parser.add_argument('-H', '--host', default='localhost', help='mqtt host to connect to. Defaults to localhost')
+    parser.add_argument('-p', '--port', default='1883', help='network port to connect to. Defaults to 1883')
+    parser.add_argument('-d', '--dbus', default='SESSION', choices=['SESSION', 'SYSTEM'], help='which bus to use, SESSION is default')
+
+    args = parser.parse_args()
+
     GObject.threads_init()
 
     # A main loop is needed for dbus "name watching" to work
@@ -159,11 +169,11 @@ if __name__ == "__main__":
     mqttc.on_publish = on_publish
     mqttc.on_subscribe = on_subscribe
     mqttc.on_message = on_message
-    mqttc.connect("192.168.1.4", 1883, 60, True)
+    mqttc.connect(args.host, args.port, 60, True)
     
     mqttc.loop_start()
 
-    dbus = Dbus_handler(mqttc, 'SESSION')
+    dbus = Dbus_handler(mqttc, args.dbus)
     dbus.start()
 
     try:
