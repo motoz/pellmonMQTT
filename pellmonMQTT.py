@@ -22,6 +22,7 @@ import sys
 import argparse
 from gi.repository import Gio, GLib, GObject
 import mosquitto
+import simplejson
 
 class DbusNotConnected(Exception):
     pass
@@ -75,13 +76,11 @@ class Dbus_handler:
         def on_signal(proxy, sender_name, signal_name, parameters):
             p = parameters[0]
             msg = []
-            l = p.split(';')
-            for ds in l:
-                d= ds.split(':')
-                if d[0] == '__event__':
-                    d[1] = ':'.join(d[1:])
-                self.mq.publish("pellmon/%s"%d[0], d[1], qos=2, retain=True)
-                print 'Publish %s to pellmon/%s'%(d[1], d[0])
+            msg = simplejson.loads(p)
+            print msg	
+            for d in msg:
+                self.mq.publish("pellmon/%s"%d['name'], d['value'], qos=2, retain=True)
+                print 'Publish %s to pellmon/%s'%(d['value'], d['name'])
 
         self.notify.connect("g-signal", on_signal)
 
