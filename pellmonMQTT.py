@@ -170,7 +170,15 @@ if __name__ == "__main__":
     mqttc.on_publish = on_publish
     mqttc.on_subscribe = on_subscribe
     mqttc.on_message = on_message
-    mqttc.connect(args.host, args.port, 60, True)
+    connect = False
+    while not connect:
+        try:
+            mqttc.connect(args.host, args.port, 60, True)
+            mqttc.reconnect_delay_set(120, 300, True)
+            mqttc.reconnect_delay_set(120, 300, True)    
+            connect = True
+        except:
+            sleep(5)
     
     mqttc.loop_start()
 
