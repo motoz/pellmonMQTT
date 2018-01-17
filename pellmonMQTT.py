@@ -21,7 +21,8 @@ import os
 import sys
 import argparse
 from gi.repository import Gio, GLib, GObject
-import mosquitto
+from time import sleep
+import paho.mqtt.client as mosquitto
 import simplejson
 
 class DbusNotConnected(Exception):
@@ -165,7 +166,7 @@ if __name__ == "__main__":
     main_loop = GLib.MainLoop()
     
     #create a broker
-    mqttc = mosquitto.Mosquitto()
+    mqttc = mosquitto.Client(protocol=mosquitto.MQTTv311)
     mqttc.on_connect = on_connect
     mqttc.on_publish = on_publish
     mqttc.on_subscribe = on_subscribe
@@ -173,11 +174,14 @@ if __name__ == "__main__":
     connect = False
     while not connect:
         try:
-            mqttc.connect(args.host, args.port, 60, True)
-            mqttc.reconnect_delay_set(120, 300, True)
-            mqttc.reconnect_delay_set(120, 300, True)    
+            mqttc.connect(args.host, args.port, 60)
+            #mqttc.reconnect_delay_set(120, 300, True)
+            #mqttc.reconnect_delay_set(120, 300, True)    
             connect = True
-        except:
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:
+            print e
             sleep(5)
     
     mqttc.loop_start()
