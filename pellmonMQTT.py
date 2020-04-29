@@ -48,7 +48,7 @@ class Dbus_handler:
             )
 
     def dbus_connect(self, connection, name, owner):
-        print "connected"
+        print "dbus connected"
         self.notify = Gio.DBusProxy.new_sync(
             self.bus,
             Gio.DBusProxyFlags.NONE,
@@ -57,22 +57,18 @@ class Dbus_handler:
             '/org/pellmon/int',
             'org.pellmon.int',
             None)
+        Status.dbus_connected = True
         #Publish all data items tagged with 'All' to pellmon/_item_
         self.db = self.notify.GetFullDB('(as)',['All',])
         for item in self.db:
             try:
                 value = self.getItem(item['name'])
-                print 'Publish %s to pellmon/%s'%(value, item['name'])
-                self.mq.publish("pellmon/%s"%item['name'], value, qos=2, retain=True)
+                print 'Publish %s to pellmon2/%s'%(value, item['name'])
+                self.mq.publish("pellmon2/%s"%item['name'], value, qos=2, retain=True)
             except:
                 pass
 
-        #Subscribe to all data items tagged with 'Settings' at pellmon/settings/_item
-        self.settings = self.notify.GetFullDB('(as)',['Settings',])
-        for item in self.settings:
-            print 'Subscribe to pellmon/settings/%s'%item['name']
-            self.mq.subscribe("pellmon/settings/%s"%item['name'])
-
+    def subscribe(self):
         #Listen to the DBUS 'item changed' signal and publish changes at pellmon/_item_
         def on_signal(proxy, sender_name, signal_name, parameters):
             p = parameters[0]
@@ -80,12 +76,20 @@ class Dbus_handler:
             msg = simplejson.loads(p)
             print msg	
             for d in msg:
-                self.mq.publish("pellmon/%s"%d['name'], d['value'], qos=2, retain=True)
-                print 'Publish %s to pellmon/%s'%(d['value'], d['name'])
+                self.mq.publish("pellmon2/%s"%d['name'], d['value'], qos=2, retain=True)
+                print 'Publish %s to pellmon2/%s'%(d['value'], d['name'])
+        #Subscribe to all data items tagged with 'Settings' at pellmon/settings/_item
+        self.settings = self.notify.GetFullDB('(as)',['All',])
+        for item in self.settings:
+            if item['type'] in ('W', 'R/W'):
+                print 'Subscribe to pellmon2/settings/%s'%item['name']
+                self.mq.subscribe("pellmon2/settings/%s"%item['name'])
 
         self.notify.connect("g-signal", on_signal)
 
     def dbus_disconnect(self, connection, name):
+        Status.dbus_connected = False
+        Status.subscribed = False
         if self.notify:
             self.notify = None
 
@@ -129,22 +133,27 @@ class Dbus_handler:
         else:
             raise DbusNotConnected("server not running")
 
-class config:
-    pass
+class Status:
+    mqtt_connected = False
+    dbus_connected = False
+    subscribed = False
 
 if __name__ == "__main__":
     
     def on_connect(*args):
-        print "Connected";
+        print "broker connected";
+        Status.subscribed = False
+        Status.mqtt_connected = True
        
     def on_publish(*args):
-        pass #print 'published'
+        print 'published'
 
     def on_subscribe(*args):
-        pass #print 'subscribed'
+        print 'subscribed'
 
     def on_message(*args):
         """Call the DBUS setItem method with item name and payload from topic subscription at pellmon/settings/_item_"""
+        print 'subscribed item changed'
         msg = args[-1]
         item = msg.topic.split('/')[-1]
         try:
@@ -152,6 +161,14 @@ if __name__ == "__main__":
         except:
             pass
 
+    def manager():
+        if not Status.subscribed:
+            print 'Not subscribed'
+            if Status.dbus_connected and Status.mqtt_connected:
+                print 'subscribing...'
+                dbus.subscribe()
+                Status.subscribed = True
+        return True
 
     parser = argparse.ArgumentParser(prog='pellmonMQTT')
     parser.add_argument('-H', '--host', default='localhost', help='mqtt host to connect to. Defaults to localhost')
@@ -164,19 +181,23 @@ if __name__ == "__main__":
 
     # A main loop is needed for dbus "name watching" to work
     main_loop = GLib.MainLoop()
-    
+    GLib.timeout_add_seconds(1, manager)
+
     #create a broker
     mqttc = mosquitto.Client(protocol=mosquitto.MQTTv311)
     mqttc.on_connect = on_connect
     mqttc.on_publish = on_publish
     mqttc.on_subscribe = on_subscribe
     mqttc.on_message = on_message
+
+    dbus = Dbus_handler(mqttc, args.dbus)
+    dbus.start()
+
     connect = False
     while not connect:
         try:
             mqttc.connect(args.host, args.port, 60)
-            #mqttc.reconnect_delay_set(120, 300, True)
-            #mqttc.reconnect_delay_set(120, 300, True)    
+            mqttc.reconnect_delay_set(min_delay=1, max_delay=120)
             connect = True
         except KeyboardInterrupt:
             raise
@@ -186,8 +207,6 @@ if __name__ == "__main__":
     
     mqttc.loop_start()
 
-    dbus = Dbus_handler(mqttc, args.dbus)
-    dbus.start()
 
     try:
         main_loop.run()
