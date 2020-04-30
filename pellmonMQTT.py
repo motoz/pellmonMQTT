@@ -63,8 +63,8 @@ class Dbus_handler:
         for item in self.db:
             try:
                 value = self.getItem(item['name'])
-                print 'Publish %s to pellmon2/%s'%(value, item['name'])
-                self.mq.publish("pellmon2/%s"%item['name'], value, qos=2, retain=True)
+                print 'Publish %s to pellmon/%s'%(value, item['name'])
+                self.mq.publish("pellmon/%s"%item['name'], value, qos=2, retain=True)
             except:
                 pass
 
@@ -76,14 +76,14 @@ class Dbus_handler:
             msg = simplejson.loads(p)
             print msg	
             for d in msg:
-                self.mq.publish("pellmon2/%s"%d['name'], d['value'], qos=2, retain=True)
-                print 'Publish %s to pellmon2/%s'%(d['value'], d['name'])
+                self.mq.publish("pellmon/%s"%d['name'], d['value'], qos=2, retain=True)
+                print 'Publish %s to pellmon/%s'%(d['value'], d['name'])
         #Subscribe to all data items tagged with 'Settings' at pellmon/settings/_item
         self.settings = self.notify.GetFullDB('(as)',['All',])
         for item in self.settings:
             if item['type'] in ('W', 'R/W'):
-                print 'Subscribe to pellmon2/settings/%s'%item['name']
-                self.mq.subscribe("pellmon2/settings/%s"%item['name'])
+                print 'Subscribe to pellmon/settings/%s'%item['name']
+                self.mq.subscribe("pellmon/settings/%s"%item['name'])
 
         self.notify.connect("g-signal", on_signal)
 
