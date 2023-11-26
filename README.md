@@ -2,7 +2,7 @@ pellmonMQTT
 ===========
 
 An MQTT client for *PellMon*.
-This is an attempt to refactor/migrate from Python2.7 -> Python3(.10)
+This is an attempt to refactor/migrate from Python2.7 -> Python3(.10).
 
 **PellmonMQTT** connects to the PellMon DBUS interface and publishes all data at pellmon/_item_ and subscribes to all settings at pellmon/settings/_item_. Changed data items are republished and received data is written to the corresponding PellMon _item_. Events are published to pellmon/\_\_event\_\_.
 
