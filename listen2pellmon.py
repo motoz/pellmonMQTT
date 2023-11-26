@@ -1,16 +1,16 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import mosquitto
+import paho.mqtt.client as mosquitto
 
 #define what happens after connection
 def on_connect(*args):
-    print "Connected";
+    print(Connected);
 
 #On recipt of a message
 def on_message(*args):
     msg = args[-1]
-    print msg.topic, msg.payload
+    print(msg.topic, msg.payload)
 
 #create a broker
 mqttc = mosquitto.Mosquitto()
