@@ -14,7 +14,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -H HOST, --host HOST  mqtt host to connect to. Defaults to localhost
   -u USER, --user USER  User id for connecting to MQTT server
-  -p PASSWORD, --password PASSWORD  Password for connecting to MQTT server
+  -P PASSWORD, --password PASSWORD  Password for connecting to MQTT server
   -p PORT, --port PORT  network port to connect to. Defaults to 1883
   -d {SESSION,SYSTEM}, --dbus {SESSION,SYSTEM}
                         which bus to use, SESSION is default</pre>
