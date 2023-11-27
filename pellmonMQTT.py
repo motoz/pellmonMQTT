@@ -14,13 +14,11 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-from __future__ import print_function
 from builtins import object
 import os
 import sys
 import argparse
 from time import sleep
-#from gi.repository import Gio, GLib, GObject
 from gi.repository import Gio, GLib
 import paho.mqtt.client as mosquitto
 import simplejson
@@ -130,10 +128,6 @@ class Dbus_handler(object):
         """ setItem """
         if DEBUG:
             print(">>>>> setItem")
-        #if self.notify:
-        #    return self.notify.SetItem('(ss)', str(item), str(value))
-        #else:
-        #    raise DbusNotConnected("server not running")
         if self.notify:
             return self.notify.SetItem('(ss)',item, str(value))
         raise DbusNotConnected("server not running")
@@ -142,10 +136,6 @@ class Dbus_handler(object):
         """ getdb """
         if DEBUG:
             print(">>>>> getdb")
-        #if self.notify:
-        #    return self.notify.GetDB()
-        #else:
-        #    raise DbusNotConnected("server not running")
         if self.notify:
             return self.notify.GetDB()
         raise DbusNotConnected("server not running")
@@ -154,10 +144,6 @@ class Dbus_handler(object):
         """ getDBwithTags """
         if DEBUG:
             print(">>>>> getDBwithTags")
-        #if self.notify:
-        #    return self.notify.GetDBwithTags('(as)', str(tags))
-        #else:
-        #    raise DbusNotConnected("server not running")
         if self.notify:
             return self.notify.GetDBwithTags('(as)', tags)
         raise DbusNotConnected("server not running")
@@ -166,11 +152,6 @@ class Dbus_handler(object):
         """ getFullDB """
         if DEBUG:
             print(">>>>> getFullDB")
-        #if self.notify:
-        #    db = self.notify.GetFullDB('(as)', str(tags))
-        #    return db
-        #else:
-        #    raise DbusNotConnected("server not running")
         if self.notify:
             db = self.notify.GetFullDB('(as)', str(tags))
             return db
@@ -180,10 +161,6 @@ class Dbus_handler(object):
         """ getMenutags """
         if DEBUG:
             print(">>>>> getMenutags")
-        #if self.notify:
-        #    return self.notify.getMenutags()
-        #else:
-        #    raise DbusNotConnected("server not running")
         if self.notify:
             return self.notify.getMenutags()
         raise DbusNotConnected("server not running")
