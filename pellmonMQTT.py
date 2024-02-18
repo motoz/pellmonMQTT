@@ -179,23 +179,27 @@ class Status(object):
 if __name__ == "__main__":
 
     """ Functions to be used by mqtt """
-    def on_connect(*args):
+    #def on_connect(*args):
+    def on_connect():
         """ on_connect """
         print("broker connected")
         Status.subscribed = False
         Status.mqtt_connected = True
 
-    def on_publish(*args):
+    #def on_publish(*args):
+    def on_publish():
         """ What do when calling on_publish """
         pass #print 'published'
         #print('Publishing')
 
-    def on_subscribe(*args):
+    #def on_subscribe(*args):
+    def on_subscribe():
         """ on_subscribe """
         pass #print 'subscribed'
         #print('Subscribing')
 
-    def on_disconnect(*args):
+    #def on_disconnect(*args):
+    def on_disconnect():
         """ on_disconnect """
         print("Disconnecting from MQTT: ")
         mqtt_connected = False
@@ -230,7 +234,7 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--topic', default='pellmon', help='Defines the topic to publish/listen to, default is pellmon')
     parser.add_argument('-u', '--username', default='', help='Define a username which will be used to connect to the mqtt broker')
     parser.add_argument('-P', '--password', default='', help='Define a password which will be used to connect to the mqtt broker')
-    args = parser.parse_args()
+    arguments = parser.parse_args()
 
     #GObject.threads_init()
 
@@ -246,16 +250,16 @@ if __name__ == "__main__":
     mqttc.on_subscribe = on_subscribe
     mqttc.on_message = on_message
 
-    print("topic: " + args.topic + " connecting on " + args.dbus)
-    dbus = Dbus_handler(mqttc, args.dbus, args.topic)
+    print("topic: " + arguments.topic + " connecting on " + arguments.dbus)
+    dbus = Dbus_handler(mqttc, arguments.dbus, arguments.topic)
     dbus.start()
 
     connect = False
     print("MQTT broker not connected yet..")
     while not connect:
         try:
-            mqttc.username_pw_set(username=args.username, password=args.password)
-            mqttc.connect(args.host, int(args.port), 60)
+            mqttc.username_pw_set(username=arguments.username, password=arguments.password)
+            mqttc.connect(arguments.host, int(arguments.port), 60)
             #mqttc.reconnect_delay_set(120, 300, True)
             #mqttc.reconnect_delay_set(120, 300, True)
             mqttc.reconnect_delay_set(min_delay=1, max_delay=120)
@@ -271,7 +275,7 @@ if __name__ == "__main__":
     print("Python version: " + str(sys.version))
     mqttc.loop_start()
 
-    print("Connected to broker ", args.host)
+    print("Connected to broker ", arguments.host)
     try:
         main_loop.run()
     except KeyboardInterrupt:
