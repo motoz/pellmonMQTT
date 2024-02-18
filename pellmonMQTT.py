@@ -77,8 +77,8 @@ class Dbus_handler(object):
         for item in self.db:
             try:
                 value = self.getItem(item['name'])
-                print('Publish %s to %s/%s'%(str(value), self.mqttTopic, item['name']))
-                self.mq.publish("%s/%s"%(self.mqttTopic, item['name']), value, qos=2, retain=True)
+                print(f"Publish {str(value)} to {self.mqttTopic}/ {item['name']}")
+                self.mq.publish(f"{self.mqttTopic}/{item['name']}", value, qos=2, retain=True)
             except RuntimeError as error:
                 print("Exeption caught in Publish - dbus_connect: " + error)
                 pass
@@ -88,18 +88,19 @@ class Dbus_handler(object):
         if DEBUG:
             print(">>>>> subscribe")
         def on_signal(proxy, sender_name, signal_name, parameters):
-            p = parameters[0]
+            parameter = parameters[0]
             msg = []
-            msg = simplejson.loads(p)
-            for d in msg:
-                self.mq.publish("%s/%s"%(self.mqttTopic, d['name']), d['value'], qos=2, retain=True)
-                print('Publish %s to %s/%s'%(d['value'], self.mqttTopic, d['name']))
+            msg = simplejson.loads(parameter)
+            for dbusmsg in msg:
+                self.mq.publish(f"{self.mqttTopic}/{dbusmsg['name']}", dbusmsg['value'], qos=2, retain=True)
+                print(f"Publish {dbusmsg['value']} to {self.mqttTopic}/{dbusmsg['name']}")
         #Subscribe to all data items tagged with 'Settings' at pellmon/settings/_item
         self.settings = self.notify.GetFullDB('(as)', ['All',])
         for item in self.settings:
             if item['type'] in ('W', 'R/W'):
-                print('Subscribe to %s/settings/%s'%(self.mqttTopic, item['name']))
-                self.mq.subscribe("%s/settings/%s"%(self.mqttTopic, item['name']))
+                #print('Subscribe to %s/settings/%s'%(self.mqttTopic, item['name']))
+                print(f"Subscribe to {self.mqttTopic}/settings/{item['name']}")
+                self.mq.subscribe(f"{self.mqttTopic}/settings/{item['name']}")
 
         self.notify.connect("g-signal", on_signal)
 
@@ -212,7 +213,8 @@ if __name__ == "__main__":
         item = msg.topic.split('/')[-1]
         try:
             dbus.setItem(item, msg.payload)
-            print('Set %s=%s, %s'%(item, msg.payload, dbus.setItem(item, msg.payload.decode("utf-8"))))
+            #print('Set %s=%s, %s'%(item, msg.payload, dbus.setItem(item, msg.payload.decode("utf-8"))))
+            print(f"Set {item}={msg.payload}, {dbus.setItem(item, msg.payload.decode('utf-8'))}" )
         except RuntimeError as error:
             print("Exception caught: " + error)
             pass
@@ -228,12 +230,24 @@ if __name__ == "__main__":
         return True
 
     parser = argparse.ArgumentParser(prog='pellmonMQTT')
-    parser.add_argument('-H', '--host', default='localhost', help='mqtt host to connect to. Defaults to localhost')
-    parser.add_argument('-p', '--port', default='1883', help='network port to connect to. Defaults to 1883')
-    parser.add_argument('-d', '--dbus', default='SESSION', choices=['SESSION', 'SYSTEM'], help='which bus to use, SESSION is default')
-    parser.add_argument('-t', '--topic', default='pellmon', help='Defines the topic to publish/listen to, default is pellmon')
-    parser.add_argument('-u', '--username', default='', help='Define a username which will be used to connect to the mqtt broker')
-    parser.add_argument('-P', '--password', default='', help='Define a password which will be used to connect to the mqtt broker')
+    parser.add_argument('-H', '--host',
+                        default='localhost',
+                        help='mqtt host to connect to. Defaults to localhost')
+    parser.add_argument('-p', '--port',
+                        default='1883',
+                        help='network port to connect to. Defaults to 1883')
+    parser.add_argument('-d', '--dbus',
+                        default='SESSION',
+                        choices=['SESSION', 'SYSTEM'],
+                        help='which bus to use, SESSION is default')
+    parser.add_argument('-t', '--topic',
+                        default='pellmon',
+                        help='Defines the topic to publish/listen to, default is pellmon')
+    parser.add_argument('-u', '--username',
+                        default='', help='Define a username which will be used to connect to the mqtt broker')
+    parser.add_argument('-P', '--password',
+                        default='',
+                        help='Define a password which will be used to connect to the mqtt broker')
     arguments = parser.parse_args()
 
     #GObject.threads_init()
