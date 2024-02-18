@@ -180,27 +180,23 @@ class Status(object):
 if __name__ == "__main__":
 
     """ Functions to be used by mqtt """
-    #def on_connect(*args):
-    def on_connect():
+    def on_connect(*args):
         """ on_connect """
         print("broker connected")
         Status.subscribed = False
         Status.mqtt_connected = True
 
-    #def on_publish(*args):
-    def on_publish():
+    def on_publish(*args):
         """ What do when calling on_publish """
         pass #print 'published'
         #print('Publishing')
 
-    #def on_subscribe(*args):
-    def on_subscribe():
+    def on_subscribe(*args):
         """ on_subscribe """
         pass #print 'subscribed'
         #print('Subscribing')
 
-    #def on_disconnect(*args):
-    def on_disconnect():
+    def on_disconnect(*args):
         """ on_disconnect """
         print("Disconnecting from MQTT: ")
         mqtt_connected = False
